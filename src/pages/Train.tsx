@@ -6,6 +6,7 @@ import { useTrainingSession } from '../hooks/useTrainingSession'
 import VideoPlayer from '../components/VideoPlayer'
 import CountdownTimer from '../components/CountdownTimer'
 import ExerciseInfo from '../components/ExerciseInfo'
+import MusicToggle from '../components/MusicToggle'
 import type { Plan, PlanDay } from '../types'
 
 // 训练进行中页（核心）
@@ -42,7 +43,7 @@ function TrainInner({ plan, planDay, dayNum }: { plan: Plan; planDay: PlanDay; d
   const isTodayChecked = useStore((s) => s.isTodayChecked())
 
   const session = useTrainingSession(plan, planDay)
-  const { state, countdown, voice, start, pause, resume, skip, quit, paused } = session
+  const { state, countdown, voice, bgm, start, pause, resume, skip, quit, paused } = session
   const { phase, currentExercise, setIndex, totalExercises, elapsedSec, repCount, repTotal, currentIndex } = state
 
   // 视频源：休息阶段也播放刚做完的动作视频（与动作相关 + 每个动作各不相同）
@@ -75,7 +76,7 @@ function TrainInner({ plan, planDay, dayNum }: { plan: Plan; planDay: PlanDay; d
       <div className="flex items-center justify-between px-4 h-12">
         <button onClick={quit} className="text-sm text-white/60">✕ 退出</button>
         <span className="text-xs text-white/50">第 {dayNum} 天 · {planDay.title}</span>
-        <div className="w-16" />
+        <MusicToggle enabled={bgm.enabled} onToggle={bgm.toggle} />
       </div>
 
       {/* 主体 */}

@@ -11,7 +11,7 @@ const CLIP_KEYS = [
   'jumping-jack', 'squat', 'pushup', 'crunch', 'plank',
   'russian-twist', 'leg-raise', 'lunge', 'mountain-climber', 'burpee',
   'mid-half', 'mid-final',
-  'rest', 'rest-next',
+  'rest', 'rest-next', 'rest-ready',
   'complete',
 ] as const
 

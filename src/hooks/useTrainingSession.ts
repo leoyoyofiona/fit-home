@@ -4,6 +4,7 @@ import { getExercise } from '../data/exercises'
 import { useCountdown } from './useCountdown'
 import { useVoice } from './useVoice'
 import type { VoiceClipKey } from './useVoice'
+import { useBgm } from './useBgm'
 
 export type Phase = 'intro' | 'ready' | 'exercise' | 'rest' | 'complete'
 
@@ -33,6 +34,7 @@ export interface SessionState {
 export function useTrainingSession(plan: Plan, day: PlanDay) {
   const voice = useVoice()
   const countdown = useCountdown()
+  const bgm = useBgm()
 
   // 展平训练序列
   const flat = useMemo<FlatItem[]>(() => {
@@ -71,6 +73,8 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
   const repTimerRef = useRef<number | null>(null)
   // 保存当前 onDone 回调，供 resume 使用
   const repDoneRef = useRef<(() => void) | null>(null)
+  // 休息快结束时的"准备继续"提示定时器
+  const restReadyTimerRef = useRef<number | null>(null)
 
   const totalExercises = useMemo(
     () => flat.filter((f) => f.type === 'exercise').length,
@@ -118,6 +122,14 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     }
   }, [])
 
+  // 清除休息提示定时器
+  const clearRestReadyTimer = useCallback(() => {
+    if (restReadyTimerRef.current) {
+      window.clearTimeout(restReadyTimerRef.current)
+      restReadyTimerRef.current = null
+    }
+  }, [])
+
   // 途中鼓励口令（在指定次数时触发一次）
   const midExerciseCues = useCallback((rep: number, total: number) => {
     const pct = rep / total
@@ -157,12 +169,14 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
   const goTo = useCallback(
     (index: number) => {
       clearRepTimer()
+      clearRestReadyTimer()
       if (index >= flat.length) {
         // 完成
         setPhase('complete')
         stopElapsedTicking()
         voice.stop()
         countdown.stop()
+        bgm.stop()
         voice.play('complete')
         return
       }
@@ -186,12 +200,18 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
         setRepCount(0)
         const next = flat[index + 1]
         const isLastExercise = !next || next.type === 'rest'
-        // 播放预录休息口令
+        // 播放预录休息口令（含放松指导）
         voice.play(isLastExercise ? 'rest' : 'rest-next')
         countdown.start(item.seconds, () => goTo(index + 1))
+        // 休息快结束时播放"准备继续"提示
+        if (item.seconds > 8) {
+          restReadyTimerRef.current = window.setTimeout(() => {
+            voice.play('rest-ready')
+          }, (item.seconds - 4) * 1000)
+        }
       }
     },
-    [flat, countdown, voice, stopElapsedTicking, clearRepTimer, startRepTimer]
+    [flat, countdown, voice, bgm, stopElapsedTicking, clearRepTimer, clearRestReadyTimer, startRepTimer]
   )
 
   // 开始训练
@@ -203,8 +223,9 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     setElapsedSec(0)
     startElapsedTicking()
     voice.play('start')
+    bgm.play()
     countdown.start(3, () => goTo(0))
-  }, [voice, countdown, goTo, startElapsedTicking])
+  }, [voice, bgm, countdown, goTo, startElapsedTicking])
 
   // 暂停/恢复
   const [paused, setPaused] = useState(false)
@@ -212,11 +233,14 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     setPaused(true)
     countdown.stop()
     clearRepTimer()
+    clearRestReadyTimer()
     stopElapsedTicking()
-  }, [countdown, stopElapsedTicking, clearRepTimer])
+    bgm.pause()
+  }, [countdown, bgm, stopElapsedTicking, clearRepTimer, clearRestReadyTimer])
 
   const resume = useCallback(() => {
     setPaused(false)
+    bgm.resume()
     if (phase === 'exercise' || phase === 'rest' || phase === 'ready') {
       startElapsedTicking()
       if (phase === 'ready') {
@@ -233,25 +257,28 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
         }
       }
     }
-  }, [phase, countdown, currentIndex, flat, goTo, startElapsedTicking, startRepTimer])
+  }, [phase, countdown, bgm, currentIndex, flat, goTo, startElapsedTicking, startRepTimer])
 
   const skip = useCallback(() => {
     voice.stop()
     clearRepTimer()
+    clearRestReadyTimer()
     goTo(currentIndex + 1)
-  }, [goTo, currentIndex, voice, clearRepTimer])
+  }, [goTo, currentIndex, voice, clearRepTimer, clearRestReadyTimer])
 
   const quit = useCallback(() => {
     clearRepTimer()
+    clearRestReadyTimer()
     countdown.stop()
     stopElapsedTicking()
     voice.stop()
+    bgm.stop()
     setPhase('intro')
     setCurrentIndex(0)
     setRepCount(0)
     elapsedRef.current = 0
     setElapsedSec(0)
-  }, [countdown, stopElapsedTicking, voice, clearRepTimer])
+  }, [countdown, stopElapsedTicking, voice, bgm, clearRepTimer, clearRestReadyTimer])
 
   const state: SessionState = {
     phase,
@@ -270,6 +297,7 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     flat,
     countdown,
     voice,
+    bgm,
     paused,
     start,
     pause,
