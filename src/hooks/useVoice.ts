@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useStore } from '../store/useStore'
 
-// 预录真人语音播放（edge-tts 生成，男声教练）
-// 优先播放 mp3 音频文件；无匹配文件时降级为 Web Speech API
+// 预录真人语音播放（edge-tts 生成）
+// 异性口播：男性用户听女声，女性用户听男声
 const VOICE_BASE = '/audio/voice/'
 
 // 预录音频 key → 文件名映射
@@ -21,6 +22,10 @@ export function useVoice() {
   const [supported] = useState(true)
   const [ttsSupported, setTtsSupported] = useState(false)
 
+  // 读取用户性别，异性口播：男→女声，女→男声
+  const gender = useStore((s) => s.profile?.gender)
+  const voiceGender = gender === 'female' ? 'male' : 'female'
+
   useEffect(() => {
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       setTtsSupported(true)
@@ -28,50 +33,24 @@ export function useVoice() {
   }, [])
 
   // 播放预录音频
-  const play = useCallback((key: VoiceClipKey) => {
-    // 停止当前播放
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
-    }
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      window.speechSynthesis.cancel()
-    }
-
-    const audio = new Audio(`${VOICE_BASE}${key}.mp3`)
-    audioRef.current = audio
-    audio.play().catch(() => {
-      // 自动播放被阻止，忽略
-    })
-  }, [])
-
-  // TTS 降级播放（仅用于无法预录的动态文本）
-  const speak = useCallback(
-    (text: string) => {
-      if (!text) return
+  const play = useCallback(
+    (key: VoiceClipKey) => {
+      // 停止当前播放
       if (audioRef.current) {
         audioRef.current.pause()
         audioRef.current = null
       }
       if (typeof window !== 'undefined' && window.speechSynthesis) {
-        try {
-          window.speechSynthesis.cancel()
-          const u = new SpeechSynthesisUtterance(text)
-          u.lang = 'zh-CN'
-          const voices = window.speechSynthesis.getVoices()
-          const zh = voices.find(
-            (v) => v.lang === 'zh-CN' || v.lang === 'zh_CN' || v.lang.startsWith('zh')
-          )
-          if (zh) u.voice = zh
-          u.rate = 1.1
-          u.pitch = 1
-          window.speechSynthesis.speak(u)
-        } catch {
-          /* ignore */
-        }
+        window.speechSynthesis.cancel()
       }
+
+      const audio = new Audio(`${VOICE_BASE}${voiceGender}/${key}.mp3`)
+      audioRef.current = audio
+      audio.play().catch(() => {
+        // 自动播放被阻止，忽略
+      })
     },
-    []
+    [voiceGender]
   )
 
   const stop = useCallback(() => {
@@ -84,5 +63,5 @@ export function useVoice() {
     }
   }, [])
 
-  return { play, speak, stop, supported, ttsSupported }
+  return { play, stop, supported, ttsSupported, voiceGender }
 }
