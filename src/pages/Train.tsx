@@ -6,7 +6,6 @@ import { useTrainingSession } from '../hooks/useTrainingSession'
 import VideoPlayer from '../components/VideoPlayer'
 import CountdownTimer from '../components/CountdownTimer'
 import ExerciseInfo from '../components/ExerciseInfo'
-import MusicToggle from '../components/MusicToggle'
 import type { Plan, PlanDay } from '../types'
 
 // 训练进行中页（核心）
@@ -43,8 +42,8 @@ function TrainInner({ plan, planDay, dayNum }: { plan: Plan; planDay: PlanDay; d
   const isTodayChecked = useStore((s) => s.isTodayChecked())
 
   const session = useTrainingSession(plan, planDay)
-  const { state, countdown, bgm, voice, start, pause, resume, skip, quit, paused } = session
-  const { phase, currentExercise, setIndex, totalExercises, elapsedSec, repCount, repTotal } = state
+  const { state, countdown, voice, start, pause, resume, skip, quit, paused } = session
+  const { phase, currentExercise, setIndex, totalExercises, elapsedSec, repCount, repTotal, currentIndex } = state
 
   // 视频源：休息阶段也播放刚做完的动作视频（与动作相关 + 每个动作各不相同）
   // 休息时通过 VideoPlayer 慢放 + 降低亮度 + 绿色遮罩来区分
@@ -76,7 +75,7 @@ function TrainInner({ plan, planDay, dayNum }: { plan: Plan; planDay: PlanDay; d
       <div className="flex items-center justify-between px-4 h-12">
         <button onClick={quit} className="text-sm text-white/60">✕ 退出</button>
         <span className="text-xs text-white/50">第 {dayNum} 天 · {planDay.title}</span>
-        <MusicToggle enabled={bgm.enabled} usingFallback={bgm.usingFallback} onToggle={bgm.toggle} />
+        <div className="w-16" />
       </div>
 
       {/* 主体 */}
@@ -131,6 +130,7 @@ function TrainInner({ plan, planDay, dayNum }: { plan: Plan; planDay: PlanDay; d
                 repTotal={repTotal}
                 countdownRemaining={countdown.remaining}
                 countdownTotal={phase === 'rest' ? planDay.restBetweenSets : (currentExercise?.value ?? 30)}
+                currentIndex={currentIndex}
               />
             </div>
 

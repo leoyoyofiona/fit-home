@@ -4,7 +4,6 @@ import { getExercise } from '../data/exercises'
 import { useCountdown } from './useCountdown'
 import { useVoice } from './useVoice'
 import type { VoiceClipKey } from './useVoice'
-import { useBgm } from './useBgm'
 
 export type Phase = 'intro' | 'ready' | 'exercise' | 'rest' | 'complete'
 
@@ -33,7 +32,6 @@ export interface SessionState {
 
 export function useTrainingSession(plan: Plan, day: PlanDay) {
   const voice = useVoice()
-  const bgm = useBgm()
   const countdown = useCountdown()
 
   // 展平训练序列
@@ -163,7 +161,6 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
         // 完成
         setPhase('complete')
         stopElapsedTicking()
-        bgm.pause()
         voice.stop()
         countdown.stop()
         voice.play('complete')
@@ -194,7 +191,7 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
         countdown.start(item.seconds, () => goTo(index + 1))
       }
     },
-    [flat, countdown, voice, bgm, stopElapsedTicking, clearRepTimer, startRepTimer]
+    [flat, countdown, voice, stopElapsedTicking, clearRepTimer, startRepTimer]
   )
 
   // 开始训练
@@ -205,10 +202,9 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     elapsedRef.current = 0
     setElapsedSec(0)
     startElapsedTicking()
-    bgm.play()
     voice.play('start')
     countdown.start(3, () => goTo(0))
-  }, [bgm, voice, countdown, goTo, startElapsedTicking])
+  }, [voice, countdown, goTo, startElapsedTicking])
 
   // 暂停/恢复
   const [paused, setPaused] = useState(false)
@@ -217,14 +213,12 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     countdown.stop()
     clearRepTimer()
     stopElapsedTicking()
-    bgm.pause()
-  }, [countdown, stopElapsedTicking, bgm, clearRepTimer])
+  }, [countdown, stopElapsedTicking, clearRepTimer])
 
   const resume = useCallback(() => {
     setPaused(false)
     if (phase === 'exercise' || phase === 'rest' || phase === 'ready') {
       startElapsedTicking()
-      bgm.play()
       if (phase === 'ready') {
         countdown.start(countdown.remaining || 3, () => goTo(currentIndex))
       } else if (phase === 'rest') {
@@ -239,7 +233,7 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
         }
       }
     }
-  }, [phase, countdown, currentIndex, flat, goTo, startElapsedTicking, bgm, startRepTimer])
+  }, [phase, countdown, currentIndex, flat, goTo, startElapsedTicking, startRepTimer])
 
   const skip = useCallback(() => {
     voice.stop()
@@ -251,14 +245,13 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     clearRepTimer()
     countdown.stop()
     stopElapsedTicking()
-    bgm.pause()
     voice.stop()
     setPhase('intro')
     setCurrentIndex(0)
     setRepCount(0)
     elapsedRef.current = 0
     setElapsedSec(0)
-  }, [countdown, stopElapsedTicking, bgm, voice, clearRepTimer])
+  }, [countdown, stopElapsedTicking, voice, clearRepTimer])
 
   const state: SessionState = {
     phase,
@@ -277,7 +270,6 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     flat,
     countdown,
     voice,
-    bgm,
     paused,
     start,
     pause,

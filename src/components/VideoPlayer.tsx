@@ -13,6 +13,7 @@ interface Props {
   repTotal?: number
   countdownRemaining?: number
   countdownTotal?: number
+  currentIndex?: number
 }
 
 // 视频播放组件（新版：真人视频为主角，文字叠加为辅助）
@@ -29,6 +30,7 @@ export default function VideoPlayer({
   repTotal,
   countdownRemaining,
   countdownTotal,
+  currentIndex,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -75,9 +77,9 @@ export default function VideoPlayer({
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden bg-slate-950">
-      {/* 休息阶段：放松动作动画 */}
+      {/* 休息阶段：放松动作视频（每次新休息用 currentIndex 作为 seed 切换视频） */}
       {phase === 'rest' ? (
-        <RestAnimation />
+        <RestAnimation seed={currentIndex ?? 0} />
       ) : videoSrc ? (
         <video
           ref={videoRef}
@@ -143,7 +145,7 @@ export default function VideoPlayer({
         {label && phase === 'rest' && (
           <div className="text-center mb-2">
             <span className="text-sm text-green-300 font-medium drop-shadow">
-              ♻ 跟着动画一起放松
+              ♻ 跟着视频一起放松
             </span>
           </div>
         )}
