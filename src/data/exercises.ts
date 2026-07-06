@@ -13,7 +13,7 @@ export const exercises: Exercise[] = [
     value: 30,
     tempo: 1,
     rest: 15,
-    cue: '开合跳，大家跟着我一起！双手双脚同时开合，保持节奏，呼吸均匀，腰间的肥油咔咔掉！加油！',
+    cue: '双手双脚同时开合，保持节奏',
     svgType: 'jumpingJack',
     videoSrc: '/videos/v10.mp4', // ✅ 真人开合跳
   },
@@ -27,7 +27,7 @@ export const exercises: Exercise[] = [
     value: 30,
     tempo: 2,
     rest: 15,
-    cue: '深蹲，15下！下蹲到大腿与地面平行，膝盖不要内扣，脚尖微微向外，起立时收紧臀部。坚持住，调整呼吸！',
+    cue: '下蹲至大腿平行，膝盖不内扣',
     svgType: 'squat',
     videoSrc: '/videos/v02.mp4', // ✅ 真人在家徒手深蹲（Mixkit）
   },
@@ -41,7 +41,7 @@ export const exercises: Exercise[] = [
     value: 30,
     tempo: 2.5,
     rest: 15,
-    cue: '俯卧撑，12下！身体保持一条直线，核心收紧，下落至胸部接近地面，撑起时发力要快。不要塌腰，加油！',
+    cue: '身体一条直线，核心收紧',
     svgType: 'pushup',
     videoSrc: '/videos/v01.mp4', // ✅ 真人俯卧撑
   },
@@ -55,7 +55,7 @@ export const exercises: Exercise[] = [
     value: 30,
     tempo: 1.5,
     rest: 15,
-    cue: '卷腹，20下！下背贴地，肩胛骨离地，感受腹肌收缩，慢慢下放。呼吸配合，起时呼气，下时吸气！',
+    cue: '下背贴地，肩胛骨离地，腹肌发力',
     svgType: 'crunch',
     videoSrc: '/videos/v03.mp4', // ✅ 真人仰卧卷腹（ymove.app crunches）
   },
@@ -69,7 +69,7 @@ export const exercises: Exercise[] = [
     value: 30,
     tempo: 0,
     rest: 15,
-    cue: '平板支撑，坚持30秒！身体一条直线，收紧核心，臀部不要塌也不要翘，用力撑住，调整呼吸，你可以的！',
+    cue: '身体一条直线，臀部不塌不翘',
     svgType: 'plank',
     videoSrc: '/videos/v04.mp4', // ✅ 真人平板支撑（Mixkit）
   },
@@ -83,7 +83,7 @@ export const exercises: Exercise[] = [
     value: 30,
     tempo: 1.5,
     rest: 15,
-    cue: '俄罗斯转体，20下！身体后倾，双脚离地，双手合十，左右转动上半身，感受腰侧发力。坚持住！',
+    cue: '身体后倾，双脚离地，左右转体',
     svgType: 'russianTwist',
     videoSrc: '/videos/v05.mp4', // ✅ 真人坐姿俄罗斯转体（ymove.app russian-twist-no-weight）
   },
@@ -97,7 +97,7 @@ export const exercises: Exercise[] = [
     value: 30,
     tempo: 2,
     rest: 15,
-    cue: '仰卧抬腿，15下！双腿并拢伸直，抬起至90度，慢慢下放不要触地，下腹发力，呼吸均匀！',
+    cue: '双腿并拢伸直，下腹发力抬起',
     svgType: 'legRaise',
     videoSrc: '/videos/v06.mp4', // ✅ 真人仰卧抬腿（ymove.app lying-leg-raises）
   },
@@ -111,7 +111,7 @@ export const exercises: Exercise[] = [
     value: 32,
     tempo: 2,
     rest: 15,
-    cue: '弓步蹲，16下！一脚前跨下蹲，前膝不超过脚尖，后膝接近地面，左右交替。大腿发力，坚持！',
+    cue: '前膝不超过脚尖，左右交替',
     svgType: 'lunge',
     videoSrc: '/videos/v07.mp4', // ✅ 真人徒手弓步蹲（Mixkit）
   },
@@ -125,7 +125,7 @@ export const exercises: Exercise[] = [
     value: 30,
     tempo: 1,
     rest: 15,
-    cue: '登山者，30下！俯撑姿势，双腿交替向胸部提膝，保持核心稳定，速度加快，心率上来，燃脂！',
+    cue: '俯撑姿势，双腿交替提膝',
     svgType: 'mountainClimber',
     videoSrc: '/videos/v08.mp4', // ✅ 真人登山者（ymove.app mountain-climbers）
   },
@@ -139,7 +139,7 @@ export const exercises: Exercise[] = [
     value: 30,
     tempo: 3,
     rest: 20,
-    cue: '波比跳，10下！下蹲、后踢、俯撑、收腿、纵跳，一气呵成，全力以赴！这是最后一个动作，冲啊！',
+    cue: '下蹲、后踢、俯撑、收腿、纵跳',
     svgType: 'burpee',
     videoSrc: '/videos/v09.mp4', // ✅ 真人波比跳（ymove.app burpee）
   },

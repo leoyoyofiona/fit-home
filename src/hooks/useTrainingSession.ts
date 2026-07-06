@@ -2,7 +2,8 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { Exercise, Plan, PlanDay } from '../types'
 import { getExercise } from '../data/exercises'
 import { useCountdown } from './useCountdown'
-import { useSpeech } from './useSpeech'
+import { useVoice } from './useVoice'
+import type { VoiceClipKey } from './useVoice'
 import { useBgm } from './useBgm'
 
 export type Phase = 'intro' | 'ready' | 'exercise' | 'rest' | 'complete'
@@ -31,7 +32,7 @@ export interface SessionState {
 }
 
 export function useTrainingSession(plan: Plan, day: PlanDay) {
-  const speech = useSpeech()
+  const voice = useVoice()
   const bgm = useBgm()
   const countdown = useCountdown()
 
@@ -120,18 +121,18 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
   }, [])
 
   // 途中鼓励口令（在指定次数时触发一次）
-  const midExerciseCues = useCallback((rep: number, total: number, name: string) => {
+  const midExerciseCues = useCallback((rep: number, total: number) => {
     const pct = rep / total
     if (pct === 0.5) {
-      speech.speak(`已经完成一半了，${name}，${rep}下了，坚持住！调整呼吸！`)
+      voice.play('mid-half')
     } else if (pct >= 0.8) {
-      speech.speak(`最后几下了，冲啊！${(total - rep)}下，${name}！`)
+      voice.play('mid-final')
     }
-  }, [speech])
+  }, [voice])
 
   // 启动次数计时（不重置 repCount，从当前值继续，供 resume 复用）
   const startRepTimer = useCallback(
-    (reps: number, tempo: number, onDone: () => void, exerciseName: string) => {
+    (reps: number, tempo: number, onDone: () => void) => {
       clearRepTimer()
       repDoneRef.current = onDone
       repTimerRef.current = window.setInterval(() => {
@@ -145,7 +146,7 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
           const next = prev + 1
           // 途中鼓励（防抖：用 setTimeout 避免与计数语音冲突）
           if (next === Math.round(reps * 0.5) || next === Math.round(reps * 0.8)) {
-            setTimeout(() => midExerciseCues(next, reps, exerciseName), 300)
+            setTimeout(() => midExerciseCues(next, reps), 300)
           }
           return next
         })
@@ -163,21 +164,21 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
         setPhase('complete')
         stopElapsedTicking()
         bgm.pause()
-        speech.stop()
+        voice.stop()
         countdown.stop()
-        speech.speak('太棒了！今天的训练全部完成！汗水不会骗人，你越来越强了！记得打卡哦，我们明天见！')
+        voice.play('complete')
         return
       }
       const item = flat[index]
       setCurrentIndex(index)
       if (item.type === 'exercise') {
         setPhase('exercise')
-        // 开场口令：动作名 + 要领
-        speech.speak(`${item.exercise!.name}，${item.exercise!.reps > 0 ? `我们一起做${item.exercise!.reps}下` : `坚持${item.exercise!.value}秒`}！${item.exercise!.cue}`)
+        // 播放预录口令：动作名 + 次数/秒数
+        voice.play(item.exercise!.id as VoiceClipKey)
         if (item.mode === 'reps' && item.reps > 0) {
           // 次数模式：从第 1 下开始，按节奏计数
           setRepCount(1)
-          startRepTimer(item.reps, item.tempo, () => goTo(index + 1), item.exercise!.name)
+          startRepTimer(item.reps, item.tempo, () => goTo(index + 1))
         } else {
           // 时长模式：倒计时
           setRepCount(0)
@@ -187,18 +188,13 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
         setPhase('rest')
         setRepCount(0)
         const next = flat[index + 1]
-        const nextName = next?.type === 'exercise' ? next.exercise!.name : ''
         const isLastExercise = !next || next.type === 'rest'
-        // 休息口令：引导放松 + 预告下一个动作
-        if (isLastExercise) {
-          speech.speak(`休息${item.seconds}秒。这组做完了，大家甩甩手、扭扭腰、调整呼吸，大腿感受一下酸爽的感觉！坚持住，下一组会更强！`)
-        } else {
-          speech.speak(`休息${item.seconds}秒。来，跟着视频一起甩甩手、转转腰、抖抖腿，调整呼吸！下一个动作：${nextName}，先看一下动作要领，我们马上开始！`)
-        }
+        // 播放预录休息口令
+        voice.play(isLastExercise ? 'rest' : 'rest-next')
         countdown.start(item.seconds, () => goTo(index + 1))
       }
     },
-    [flat, countdown, speech, bgm, stopElapsedTicking, clearRepTimer, startRepTimer]
+    [flat, countdown, voice, bgm, stopElapsedTicking, clearRepTimer, startRepTimer]
   )
 
   // 开始训练
@@ -210,9 +206,9 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     setElapsedSec(0)
     startElapsedTicking()
     bgm.play()
-    speech.speak('准备好了吗？我们马上开始！调整好站姿，腰间的肥油今天咔咔掉！3、2、1，出发！')
+    voice.play('start')
     countdown.start(3, () => goTo(0))
-  }, [bgm, speech, countdown, goTo, startElapsedTicking])
+  }, [bgm, voice, countdown, goTo, startElapsedTicking])
 
   // 暂停/恢复
   const [paused, setPaused] = useState(false)
@@ -237,7 +233,7 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
         const item = flat[currentIndex]
         if (item?.mode === 'reps' && item.reps > 0) {
           // 恢复次数计数（从当前 repCount 继续）
-          startRepTimer(item.reps, item.tempo, () => goTo(currentIndex + 1), item.exercise!.name)
+          startRepTimer(item.reps, item.tempo, () => goTo(currentIndex + 1))
         } else {
           countdown.start(countdown.remaining, () => goTo(currentIndex + 1))
         }
@@ -246,23 +242,23 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
   }, [phase, countdown, currentIndex, flat, goTo, startElapsedTicking, bgm, startRepTimer])
 
   const skip = useCallback(() => {
-    speech.stop()
+    voice.stop()
     clearRepTimer()
     goTo(currentIndex + 1)
-  }, [goTo, currentIndex, speech, clearRepTimer])
+  }, [goTo, currentIndex, voice, clearRepTimer])
 
   const quit = useCallback(() => {
     clearRepTimer()
     countdown.stop()
     stopElapsedTicking()
     bgm.pause()
-    speech.stop()
+    voice.stop()
     setPhase('intro')
     setCurrentIndex(0)
     setRepCount(0)
     elapsedRef.current = 0
     setElapsedSec(0)
-  }, [countdown, stopElapsedTicking, bgm, speech, clearRepTimer])
+  }, [countdown, stopElapsedTicking, bgm, voice, clearRepTimer])
 
   const state: SessionState = {
     phase,
@@ -280,7 +276,7 @@ export function useTrainingSession(plan: Plan, day: PlanDay) {
     state,
     flat,
     countdown,
-    speech,
+    voice,
     bgm,
     paused,
     start,

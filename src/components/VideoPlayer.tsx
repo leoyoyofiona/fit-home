@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import RestAnimation from './RestAnimation'
 
 interface Props {
   videoSrc?: string
@@ -31,10 +32,10 @@ export default function VideoPlayer({
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  // 播放控制
+  // 播放控制（仅训练阶段）
   useEffect(() => {
     const v = videoRef.current
-    if (!v || !videoSrc) return
+    if (!v || !videoSrc || phase === 'rest') return
     let cancelled = false
     const onCanPlay = () => {
       if (cancelled) return
@@ -52,21 +53,16 @@ export default function VideoPlayer({
       cancelled = true
       v.removeEventListener('canplay', onCanPlay)
     }
-  }, [videoSrc, playing])
+  }, [videoSrc, playing, phase])
 
-  // 视频源变化时重新加载
+  // 视频源变化时重新加载（仅训练阶段）
   useEffect(() => {
     const v = videoRef.current
-    if (!v || !videoSrc) return
+    if (!v || !videoSrc || phase === 'rest') return
     v.load()
-  }, [videoSrc])
+  }, [videoSrc, phase])
 
-  // 休息阶段慢速播放（0.6 倍速，增加放松感）
-  useEffect(() => {
-    const v = videoRef.current
-    if (!v) return
-    v.playbackRate = phase === 'rest' ? 0.6 : 1
-  }, [phase, videoSrc])
+  // 休息阶段不再播放视频，改用 RestAnimation 组件
 
   // 是否显示倒计时模式
   const showCountdown =
@@ -79,13 +75,14 @@ export default function VideoPlayer({
 
   return (
     <div className="relative w-full h-full rounded-2xl overflow-hidden bg-slate-950">
-      {/* 真人视频 —— 主角，全尺寸清晰播放 */}
-      {videoSrc ? (
+      {/* 休息阶段：放松动作动画 */}
+      {phase === 'rest' ? (
+        <RestAnimation />
+      ) : videoSrc ? (
         <video
           ref={videoRef}
           src={videoSrc}
-          className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
-          style={{ opacity: phase === 'rest' ? 0.45 : 1 }}
+          className="absolute inset-0 w-full h-full object-cover"
           muted
           loop
           playsInline
@@ -97,12 +94,9 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {/* 顶部渐变遮罩 —— 让白字可读 */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 pointer-events-none" />
-
-      {/* 休息阶段绿色色调遮罩 —— 视觉区分休息状态 */}
-      {phase === 'rest' && (
-        <div className="absolute inset-0 bg-green-900/30 pointer-events-none" />
+      {/* 顶部渐变遮罩 —— 让白字可读（仅训练阶段） */}
+      {phase !== 'rest' && (
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/60 pointer-events-none" />
       )}
 
       {/* 顶部：动作名称标签 */}
@@ -149,7 +143,7 @@ export default function VideoPlayer({
         {label && phase === 'rest' && (
           <div className="text-center mb-2">
             <span className="text-sm text-green-300 font-medium drop-shadow">
-              ♟ 动作慢放回顾 · 休息调整呼吸
+              ♻ 跟着动画一起放松
             </span>
           </div>
         )}

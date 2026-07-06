@@ -41,12 +41,16 @@ export type SvgFigureType =
   | 'burpee'
 
 // 训练目标
+export type GoalGender = 'male' | 'female' | 'all'
+
 export interface Goal {
   id: string
   name: string
   desc: string
   icon: string
   planId: string
+  gender: GoalGender // 适合性别
+  tag: string // 简短标签，如"女性首选"
 }
 
 // 计划中"一天"的训练编排

@@ -43,7 +43,7 @@ function TrainInner({ plan, planDay, dayNum }: { plan: Plan; planDay: PlanDay; d
   const isTodayChecked = useStore((s) => s.isTodayChecked())
 
   const session = useTrainingSession(plan, planDay)
-  const { state, countdown, bgm, speech, start, pause, resume, skip, quit, paused } = session
+  const { state, countdown, bgm, voice, start, pause, resume, skip, quit, paused } = session
   const { phase, currentExercise, setIndex, totalExercises, elapsedSec, repCount, repTotal } = state
 
   // 视频源：休息阶段也播放刚做完的动作视频（与动作相关 + 每个动作各不相同）
@@ -92,11 +92,11 @@ function TrainInner({ plan, planDay, dayNum }: { plan: Plan; planDay: PlanDay; d
               <span>🔁 {planDay.sets} 组</span>
               <span>⏱ 约 {Math.max(5, Math.round(calcDayDuration(plan.id, dayNum) / 60))} 分钟</span>
             </div>
-            {!speech.supported && (
+            {!voice.supported && (
               <p className="text-xs text-amber-400/80 mb-3">⚠ 当前设备不支持语音口令，将显示文字提示</p>
             )}
             <p className="text-xs text-white/40 mb-6 max-w-xs">
-              跟着真人视频和中文口令一起练，像直播带练一样！每个动作按次数计数，完成指定次数后进入休息放松。
+              跟着真人视频和语音口令一起练！每个动作按次数计数，完成后进入休息放松。
             </p>
             <button
               onClick={start}
@@ -123,7 +123,7 @@ function TrainInner({ plan, planDay, dayNum }: { plan: Plan; planDay: PlanDay; d
               <VideoPlayer
                 videoSrc={videoSrc}
                 playing={!paused}
-                label={phase === 'rest' ? (currentExercise?.name ? `${currentExercise.name} · 休息` : '休息') : currentExercise?.name}
+                label={phase === 'rest' ? '休息放松' : currentExercise?.name}
                 phase={phase}
                 exerciseName={phase === 'exercise' ? currentExercise?.name : undefined}
                 exerciseNameEn={phase === 'exercise' ? currentExercise?.nameEn : undefined}
